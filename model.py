@@ -89,8 +89,48 @@ def pay_per_reroll_die_game(sides, reroll_cost):
         'value': float(best_value)
     }
 
-# Step 4 - red_black_card_game_value (not yet solved)
-# TODO: implement
+# Step 4 - red_black_card_game_value
+from functools import lru_cache
+
+def red_black_card_game_value(num_red, num_black):
+    @lru_cache(maxsize=None)
+    def V(r, b):
+        # Base cases
+        if r == 0 and b == 0:
+            return 0.0
+        if r == 0:
+            # Only black cards left, every draw loses money, so stop
+            return 0.0
+        if b == 0:
+            # Only red cards left, draw all of them for guaranteed profit
+            return float(r)
+        
+        # Probability of drawing red
+        p_red = r / (r + b)
+        # Probability of drawing black
+        p_black = b / (r + b)
+        
+        # Expected value if we draw:
+        # Draw red: gain +1, then continue with (r-1, b)
+        # Draw black: gain -1, then continue with (r, b-1)
+        draw_value = p_red * (1 + V(r - 1, b)) + p_black * (-1 + V(r, b - 1))
+        
+        # We can stop anytime (gain 0 additional)
+        return max(0.0, draw_value)
+    
+    # Compute continuation value for the initial state
+    cont = V(num_red, num_black)
+    
+    # If continuation <= 0, stopping is optimal
+    stop_now = cont <= 0.0
+    
+    # Value is max(0, continuation)
+    value = max(0.0, cont)
+    
+    return {
+        'value': float(value),
+        'stop_now': stop_now
+    }
 
 # Step 5 - make_quotes (not yet solved)
 # TODO: implement
