@@ -174,8 +174,24 @@ def mark_to_market_pnl(cash, inventory, settlement_value):
     # TODO: return total P&L given cash, remaining inventory, and settlement value.
     return cash+inventory*settlement_value
 
-# Step 8 - adverse_selection_loss (not yet solved)
-# TODO: implement
+# Step 8 - adverse_selection_loss
+import numpy as np
+
+def adverse_selection_loss(fair_value, bid, ask, informed_values, informed_probabilities):
+    # Convert inputs to numpy arrays
+    values = np.asarray(informed_values, dtype=float)
+    probs = np.asarray(informed_probabilities, dtype=float)
+    
+    # Loss when informed trader buys from us (v > ask): they gain v - ask, we lose that amount
+    ask_loss = np.maximum(values - ask, 0.0)
+    
+    # Loss when informed trader sells to us (v < bid): they gain bid - v, we lose that amount
+    bid_loss = np.maximum(bid - values, 0.0)
+    
+    # Expected total loss = weighted sum of both losses
+    expected_loss = np.sum(probs * (ask_loss + bid_loss))
+    
+    return float(expected_loss)
 
 # Step 9 - uncertainty_spread (not yet solved)
 # TODO: implement
