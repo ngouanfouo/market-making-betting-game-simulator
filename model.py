@@ -19,8 +19,32 @@ def expected_value(values, probabilities):
     # Return as a Python float
     return float(ev)
 
-# Step 2 - one_reroll_die_value (not yet solved)
-# TODO: implement
+# Step 2 - one_reroll_die_value
+def one_reroll_die_value(sides):
+    # Create array of faces 1..sides
+    faces = np.arange(1, sides + 1)
+    
+    # Create equal probabilities for each face
+    prob = 1.0 / sides
+    probabilities = np.full(sides, prob)
+    
+    # Expected value of a single roll (the reroll value)
+    mu = expected_value(faces, probabilities)
+    
+    # Under optimal policy: keep if face >= mu, otherwise reroll
+    # Payout for each first roll is max(face, mu)
+    payouts = np.maximum(faces, mu)
+    
+    # Expected winnings under optimal policy
+    value = expected_value(payouts, probabilities)
+    
+    # Faces to reroll: those strictly less than mu
+    reroll_faces = [int(f) for f in faces if f < mu]
+    
+    return {
+        'value': float(value),
+        'reroll_faces': reroll_faces
+    }
 
 # Step 3 - pay_per_reroll_die_game (not yet solved)
 # TODO: implement
