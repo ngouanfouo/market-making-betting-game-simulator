@@ -282,9 +282,77 @@ def update_remaining_card_value(remaining_counts, revealed_value):
         'expected_value': float(ev)
     }
 
-# Step 13 - run_market_making_episode (not yet solved)
-# TODO: implement
+# Step 13 - run_market_making_episode
+def run_market_making_episode(initial_fair_value, counterparty_sides, true_value, config):
+    # Extract config values with defaults
+    base_spread = config.get('base_spread', 1.0)
+    uncertainty = config.get('uncertainty', 0.0)
+    skew_strength = config.get('skew_strength', 0.0)
+    belief_adjustment = config.get('belief_adjustment', 0.0)
+    
+    # Initialize state
+    cash = 0.0
+    inventory = 0.0
+    fair_value = initial_fair_value
+    history = []
+    
+    # Process each counterparty trade
+    for side in counterparty_sides:
+        # 1. Determine spread width based on uncertainty
+        spread_width = uncertainty_spread(base_spread, uncertainty)
+        
+        # 2. Generate skewed quotes based on current inventory
+        quotes = inventory_skewed_quotes(fair_value, spread_width, inventory, skew_strength)
+        bid = quotes['bid']
+        ask = quotes['ask']
+        
+        # 3. Execute the trade against our quotes
+        state = {'cash': cash, 'inventory': inventory}
+        new_state = execute_trade(state, side, bid, ask)
+        cash = new_state['cash']
+        inventory = new_state['inventory']
+        
+        # 4. Update fair value belief based on the trade
+        fair_value = update_fair_value_from_trade(fair_value, side, bid, ask, belief_adjustment)
+        
+        # 5. Record history
+        history.append({
+            'bid': bid,
+            'ask': ask,
+            'side': side,
+            'cash': cash,
+            'inventory': inventory,
+            'fair_value': fair_value
+        })
+    
+    # Calculate final P&L at settlement
+    pnl = mark_to_market_pnl(cash, inventory, true_value)
+    
+    return {
+        'pnl': pnl,
+        'cash': cash,
+        'inventory': inventory,
+        'fair_value': fair_value,
+        'history': history
+    }
 
-# Step 14 - summarize_episode_pnls (not yet solved)
-# TODO: implement
+# Step 14 - summarize_episode_pnls
+def summarize_episode_pnls(pnls):
+    # Convert input to numpy array for easy computation
+    pnls_arr = np.asarray(pnls, dtype=float)
+    
+    # Compute mean
+    mean = np.mean(pnls_arr)
+    
+    # Compute population standard deviation (ddof=0)
+    std = np.std(pnls_arr, ddof=0)
+    
+    # Find the worst (minimum) P&L
+    worst = np.min(pnls_arr)
+    
+    return {
+        'mean': float(mean),
+        'std': float(std),
+        'worst': float(worst)
+    }
 
