@@ -46,8 +46,48 @@ def one_reroll_die_value(sides):
         'reroll_faces': reroll_faces
     }
 
-# Step 3 - pay_per_reroll_die_game (not yet solved)
-# TODO: implement
+# Step 3 - pay_per_reroll_die_game
+def pay_per_reroll_die_game(sides, reroll_cost):
+    N = sides
+    c = reroll_cost
+    
+    best_threshold = 1
+    best_value = -float('inf')
+    
+    # Sweep through all possible thresholds
+    # t = minimum face value we keep (1..N)
+    # t = N+1 would mean never keep, which gives infinite rerolls and diverges
+    for t in range(1, N + 1):
+        # Expected value of a roll given we keep it (average of t..N)
+        expected_keep = (t + N) / 2.0
+        
+        # Probability of keeping: faces t, t+1, ..., N
+        p_keep = (N - t + 1) / N
+        
+        # Probability of rerolling: faces 1, 2, ..., t-1
+        p_reroll = (t - 1) / N
+        
+        # Solve the recursion:
+        # V = p_keep * E[keep] + p_reroll * (V - c)
+        # V = p_keep * E[keep] + p_reroll * V - p_reroll * c
+        # V - p_reroll * V = p_keep * E[keep] - p_reroll * c
+        # V * (1 - p_reroll) = p_keep * E[keep] - p_reroll * c
+        # V * p_keep = p_keep * E[keep] - p_reroll * c
+        # V = E[keep] - (p_reroll / p_keep) * c
+        # Since p_keep > 0 for t <= N, we can divide safely
+        
+        # Special case: if p_keep = 0 (t = N+1), we never keep, but we don't consider this
+        V = expected_keep - (p_reroll / p_keep) * c
+        
+        # Track best value with tie-breaking (smallest threshold wins)
+        if V > best_value:
+            best_value = V
+            best_threshold = t
+    
+    return {
+        'threshold': best_threshold,
+        'value': float(best_value)
+    }
 
 # Step 4 - red_black_card_game_value (not yet solved)
 # TODO: implement
